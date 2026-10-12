@@ -24,17 +24,19 @@ export class HechizoForm {
   // cómo el BACKEND (HechizoManagerImpl) responde 400 "Magia prohibida en el colegio".
   tipos = TIPOS_MAGIA;
   error = signal('');
-
+  
   // RETO 6.1: Agrega las validaciones (segundo elemento de cada arreglo):
   //   - nombre:     obligatorio                       → Validators.required
   //   - nivelPoder: obligatorio, mínimo 1, máximo 100 → Validators.required, Validators.min(1), Validators.max(100)
+  
   form = this.fb.nonNullable.group({
-    nombre: [''],
+    nombre: ['', Validators.required],
     tipoMagia: ['Fuego'],
-    nivelPoder: [10],
+    nivelPoder: [10, [Validators.required, Validators.min(1), Validators.max(100)]],
   });
 
   guardar(): void {
+
     // RETO 6.2:
     //   1. Si this.form es inválido: this.form.markAllAsTouched() y return (¡no llames a la API!).
     //   2. Toma los datos con this.form.getRawValue() (tipados como Hechizo).
@@ -42,5 +44,23 @@ export class HechizoForm {
     //      - next  → this.router.navigate(['/hechizos'], { queryParams: { tipo: hechizo.tipoMagia } })
     //      - error → this.error.set(mensajeDeError(err))   (así se ve el mensaje del Manager)
     // Escribe tu código aquí:
+   if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    const hechizo = this.form.getRawValue() as Hechizo;
+    
+    this.hechizoApi.crear(hechizo).subscribe({
+
+      next: () => {
+        this.router.navigate(['/hechizos'], {
+          queryParams: { tipo: hechizo.tipoMagia },
+        });
+      },
+      error: (err) => {
+        this.error.set(mensajeDeError(err));
+      },
+    });
+    }
   }
-}
+
